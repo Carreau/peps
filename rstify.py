@@ -41,15 +41,17 @@ def getparagraph(line, iterator):
         else:
             return fix_line_emphasis(text)
     return fix_line_emphasis(text)
+
+class NothingToDo(Exception):pass
     
 def rstify(_pep):
     pep = peekable(iter(_pep))
     for line in pep:
         if 'text/x-rst' in line:
-            print('already RST, not changing')
-            yield line
-            yield from pep
-            return
+            raise NothingToDo('this pep is already RST')
+            #yield line
+            #yield from pep
+            #return
         if 'Content-Type' in line:
             continue
         if 'Created' in line :
@@ -102,15 +104,18 @@ def process_file(file):
     with open(file) as f:
         pep = f.readlines()
     out= '%s%s'%(file[:-3], 'rst' )
-    print('writing to ', out)
     with open(out,'w') as f:
         text = ''.join([r for r in rstify(pep)])
         lines = [line for line in text.splitlines()]
         f.write('\n'.join(lines))
+        print('writing to ', out)
 
         
 if __name__ == '__main__':
     import sys
     for file in sys.argv[1:]:
-        process_file(file)
+        try:
+            process_file(file)
+        except NothingToDo:
+            pass
     
