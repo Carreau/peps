@@ -1,5 +1,8 @@
 from textwrap import indent, wrap
 
+from  more_itertools import peekable
+
+
 indent_level = lambda line: len(line) - len(line.lstrip())
 
 import re
@@ -7,7 +10,11 @@ enumre = re.compile('\d+\. ')
 
 def fix_word_emphase(word):
     if '*' in word:
-        print('yep word:', word)
+        if word.startswith('*') and word.endswith('*'):
+            # plain text *word* is bold, change to `**word**`
+            print('making', word, 'bold')
+            return '**%s**'% word
+        print('making', word, 'inline pre')
         return '``%s``'% word
     return word
 
@@ -20,6 +27,14 @@ def fix_line_emphasis(line):
 
 def getparagraph(line, iterator):
     text = line.strip()
+    n = ''
+    try:
+        n = iterator.peek().strip()
+    except StopIteration:
+        print('peeked on ', line)
+        return line
+    if enumre.match(n) or n.startswith('-'):
+        return text
     for line in iterator:
         if line.strip():
             text = text + ' ' + line.strip()
@@ -28,9 +43,10 @@ def getparagraph(line, iterator):
     return fix_line_emphasis(text)
     
 def rstify(_pep):
-    pep = iter(_pep)
+    pep = peekable(iter(_pep))
     for line in pep:
         if 'text/x-rst' in line:
+            print('already RST, not changing')
             yield line
             yield from pep
             return
@@ -50,9 +66,12 @@ def rstify(_pep):
         if line.strip().startswith('-'):
             yield "\n* "+'\n  '.join(wrap(getparagraph(line.strip()[2:], pep)+'\n',77))+'\n'
 
-        if enumre.match(line.strip()):
+        elif enumre.match(line.strip()):
             num = line.strip()[:1]
             yield "\n%s. "% num+'\n   '.join(wrap(getparagraph(line.strip()[2:], pep)+'\n',76))+'\n'
+        elif line.strip().startswith('['):
+            # references:
+            yield '\n.. '+line.strip()+'\n'
 
 
         elif line.startswith(' '):
@@ -66,7 +85,7 @@ def rstify(_pep):
         elif line =='\n':
             yield line
         elif line == '\x0c\n':
-            yield '..\n'
+            yield '\n..\n'
             break
         else:
             yield '\n'
