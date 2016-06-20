@@ -32,6 +32,7 @@ deploy_dir(){
           && $TRAVIS_REPO_SLUG == $MASTER_REPO
           && $TRAVIS_BRANCH == 'master' ]] ;then
           echo "."
+          return 0
     fi
 
     if [[ $TRAVIS_PULL_REQUEST == false
@@ -39,9 +40,11 @@ deploy_dir(){
           && $TRAVIS_BRANCH != 'master'
           && $TRAVIS_BRANCH != 'gh-pages' ]] ;then
           echo "$TRAVIS_BRANCH"
+          return 0
     fi
 
     echo "there-is-a-bug-this-should-not-happen"
+    echo "$TRAVIS_PULL_REQUEST -- $TRAVIS_REPO_SLUG!=$MASTER_REPO -- $TRAVIS_BRANCH"
 }
 
 if [ -z ${DEPLOY_KEY+x} ]; then 
