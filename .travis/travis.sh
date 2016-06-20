@@ -1,4 +1,4 @@
-MASTER_REPO='python/peps'
+MASTER_REPO='Carreau/peps'
 
 authenticate(){
         echo "unpacking private ssh_key";
