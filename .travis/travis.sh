@@ -1,3 +1,5 @@
+MASTER_REPO='python/peps'
+
 authenticate(){
         echo "unpacking private ssh_key";
         echo $1 | base64 -d > ~/.ssh/github_deploy ;
@@ -9,35 +11,37 @@ authenticate(){
 
 should_deploy(){
     if [[ $TRAVIS_PULL_REQUEST == false
-          && $TRAVIS_REPO_SLUG == 'python/peps'
+          && $TRAVIS_REPO_SLUG == $MASTER_REPO
           && $TRAVIS_BRANCH == 'master' ]]; then
           echo 'Should deploy'
-          return 0
+          return 0 # bash, 0 is true
     fi
 
     if [[ $TRAVIS_PULL_REQUEST == false
-          && $TRAVIS_REPO_SLUG != 'python/peps'
+          && $TRAVIS_REPO_SLUG != $MASTER_REPO
           && $TRAVIS_BRANCH != 'master'
           && $TRAVIS_BRANCH != 'gh-pages' ]]; then
           echo 'Should deploy'
-          return 0
+          return 0 #bash 0 is true
     fi
-    return 1
+    return 1 # bash 1 is false
 }
 
 deploy_dir(){
     if [[ $TRAVIS_PULL_REQUEST == false
-          && $TRAVIS_REPO_SLUG == 'python/peps'
+          && $TRAVIS_REPO_SLUG == $MASTER_REPO
           && $TRAVIS_BRANCH == 'master' ]] ;then
           echo "."
     fi
 
     if [[ $TRAVIS_PULL_REQUEST == false
-          && $TRAVIS_REPO_SLUG != 'python/peps'
+          && $TRAVIS_REPO_SLUG != $MASTER_REPO
           && $TRAVIS_BRANCH != 'master'
           && $TRAVIS_BRANCH != 'gh-pages' ]] ;then
           echo "$TRAVIS_BRANCH"
     fi
+
+    echo "there-is-a-bug-this-should-not-happen"
 }
 
 if [ -z ${DEPLOY_KEY+x} ]; then 
@@ -46,8 +50,6 @@ if [ -z ${DEPLOY_KEY+x} ]; then
     echo "Generate a pair of key for youfork/pep, base64 encode it"
     echo "and set is as a private ENV variable on travis named DEPLOY_KEY"
 else 
-    echo "should I deploy ?"
-    echo should_deploy
     if should_deploy; 
       then
         authenticate $DEPLOY_KEY
@@ -86,5 +88,7 @@ else
         echo '==========================='
         echo $(echo $TRAVIS_REPO_SLUG | sed -e 's/\//.github.io\//')"/$DEPLOY_DIR/pep-0000.html"
         echo '==========================='
+    else
+        echo "No trying to deploy to gh-pages"
     fi 
 fi
