@@ -3,6 +3,8 @@ from textwrap import indent, wrap
 from  more_itertools import peekable
 
 
+WRAPL_LENGHT = 70
+
 indent_level = lambda line: len(line) - len(line.lstrip())
 
 import re
@@ -13,7 +15,7 @@ def fix_word_emphase(word):
         if word.startswith('*') and word.endswith('*'):
             # plain text *word* is bold, change to `**word**`
             print('making', word, 'bold')
-            return '**%s**'% word
+            return '*%s*'% word
         print('making', word, 'inline pre')
         return '``%s``'% word
     return word
@@ -66,11 +68,12 @@ def rstify(_pep):
     for line in pep:
 
         if line.strip().startswith('-'):
-            yield "\n* "+'\n  '.join(wrap(getparagraph(line.strip()[2:], pep)+'\n',77))+'\n'
+            yield "\n* "+'\n  '.join(wrap(getparagraph(line.strip()[2:], pep)+'\n',
+                WRAPL_LENGHT-3))+'\n'
 
         elif enumre.match(line.strip()):
             num = line.strip()[:1]
-            yield "\n%s. "% num+'\n   '.join(wrap(getparagraph(line.strip()[2:], pep)+'\n',76))+'\n'
+            yield "\n%s. "% num+'\n   '.join(wrap(getparagraph(line.strip()[2:], pep)+'\n',WRAPL_LENGHT-3))+'\n'
         elif line.strip().startswith('['):
             # references:
             yield '\n.. '+line.strip()+'\n'
@@ -79,7 +82,7 @@ def rstify(_pep):
         elif line.startswith(' '):
             indentlevel = indent_level(line)-4
             gp = getparagraph(line, pep)
-            par = '\n'.join(wrap(gp+'\n', 79-indentlevel))+'\n'
+            par = '\n'.join(wrap(gp+'\n', WRAPL_LENGHT-indentlevel))+'\n'
             if indentlevel == 0:
                 yield '\n'+par
             else:
@@ -104,9 +107,9 @@ def process_file(file):
     with open(file) as f:
         pep = f.readlines()
     out= '%s%s'%(file[:-3], 'rst' )
+    text = ''.join([r for r in rstify(pep)])
+    lines = [line for line in text.splitlines()]
     with open(out,'w') as f:
-        text = ''.join([r for r in rstify(pep)])
-        lines = [line for line in text.splitlines()]
         f.write('\n'.join(lines))
         print('writing to ', out)
 
